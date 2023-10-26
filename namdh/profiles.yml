@@ -1,0 +1,16 @@
+# Documentation: https://docs.getdbt.com/docs/get-started/connection-profiles
+
+namdh:
+  outputs:
+    dev:
+      host: 192.168.1.123
+      port: 5432
+      dbname: cbquant
+      user: namdh
+      pass: namdh
+      schema: Schemas
+      type: postgres
+      threads: 1
+      keepalives_idle: 0 # default 0, indicating the system default
+  target: dev
+
