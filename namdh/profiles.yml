@@ -1,4 +1,3 @@
-# Documentation: https://docs.getdbt.com/docs/get-started/connection-profiles
 
 namdh:
   outputs:

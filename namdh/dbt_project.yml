@@ -1,3 +1,23 @@
+name: namdh
+
+profile: namdh
+
+version: '1.0'
+
+require-dbt-version: ">=0.14.0"
+
+source-paths: ["models"]
+analysis-paths: ["analysis"]
+test-paths: ["tests"]
+data-paths: ["data"]
+macro-paths: ["macros"]
+
+target-path: "target"
+clean-targets:
+    - "target"
+    - "dbt_modules"
+
+
 
 # Name your project! Project names should contain only lowercase characters
 # and underscores. A good package name should reflect your organization's
@@ -13,12 +33,11 @@ profile: 'namdh'
 # The `model-paths` config, for example, states that models in this project can be
 # found in the "models/" directory. You probably won't need to change these!
 model-paths: ["models"]
-analysis-paths: ["analyses"]
 test-paths: ["tests"]
-seed-paths: ["seeds"]
-macro-paths: ["macros"]
-snapshot-paths: ["snapshots"]
 
+target-path: "target"  # directory which will store compiled SQL files
+log-path: "logs"
+packages-install-path: "dbt_packages"
 clean-targets:         # directories to be removed by `dbt clean`
   - "target"
   - "dbt_packages"
@@ -27,11 +46,19 @@ clean-targets:         # directories to be removed by `dbt clean`
 # Configuring models
 # Full documentation: https://docs.getdbt.com/docs/configuring-models
 
-# In this example config, we tell dbt to build all models in the example/
-# directory as views. These settings can be overridden in the individual model
-# files using the `{{ config(...) }}` macro.
+# In this example config, we tell dbt to build all models in the example/ directory
+# as tables. These settings can be overridden in the individual model files
+# using the `{{ config(...) }}` macro.
 models:
   namdh:
-    # Config indicated by + and applies to all files under models/example/
-    example:
+    analytics:
+      +materialized: table
+
+      role_playing_dimensions:
+        +materialized: view
+
+    staging: 
       +materialized: view
+      +schema: staging
+
+
