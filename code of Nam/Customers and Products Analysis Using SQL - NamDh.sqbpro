@@ -1,0 +1,300 @@
+<?xml version="1.0" encoding="UTF-8"?><sqlb_project><db path="D:/Downloads/stores.db" readonly="0" foreign_keys="1" case_sensitive_like="0" temp_store="0" wal_autocheckpoint="1000" synchronous="2"/><attached/><window><main_tabs open="structure browser pragmas query" current="3"/></window><tab_structure><column_width id="0" width="300"/><column_width id="1" width="0"/><column_width id="2" width="125"/><column_width id="3" width="4975"/><column_width id="4" width="0"/><expanded_item id="0" parent="1"/><expanded_item id="1" parent="1"/><expanded_item id="2" parent="1"/><expanded_item id="3" parent="1"/></tab_structure><tab_browse><current_table name="4,9:maincustomers"/><default_encoding codec=""/><browse_table_settings><table schema="main" name="customers" show_row_id="0" encoding="" plot_x_axis="" unlock_view_pk="_rowid_"><sort/><column_widths><column index="1" value="158"/><column index="2" value="262"/><column index="3" value="159"/><column index="4" value="161"/><column index="5" value="152"/><column index="6" value="242"/><column index="7" value="188"/><column index="8" value="145"/><column index="9" value="101"/><column index="10" value="106"/><column index="11" value="104"/><column index="12" value="237"/><column index="13" value="102"/></column_widths><filter_values/><conditional_formats/><row_id_formats/><display_formats/><hidden_columns/><plot_y_axes/><global_filter/></table><table schema="main" name="orderdetails" show_row_id="0" encoding="" plot_x_axis="" unlock_view_pk="_rowid_"><sort/><column_widths><column index="1" value="124"/><column index="2" value="120"/><column index="3" value="151"/><column index="4" value="92"/><column index="5" value="160"/></column_widths><filter_values/><conditional_formats/><row_id_formats/><display_formats/><hidden_columns/><plot_y_axes/><global_filter/></table></browse_table_settings></tab_browse><tab_sql><sql name="sql project">/* 
+         ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+         + Guided Project: Customers and Products Analysis Using SQL +
+         ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+ Introduction:
+
+ As part of this project we will be analysing the scale care model datbase using SQL to answer following questions
+
+ Question 1: Which products should we order more of or less of?
+ Question 2: How should we tailor marketing and communication strategies to customer behaviors?
+ Question 3: How much can we spend on acquiring new customers?
+
+ Database Summary:
+
+ The database contains 8 tables as follows.
+   
+ 1) Customers:    Contains customer data; 'customerNumber' is the 'primary key'; 'salesRepEmployeeNumber' is the 'foreign key';
+       		      Relationship with 'orders' and 'payments' tables on 'customerNumber'; 
+				  Relationship with 'employees' table on 'salesRepEmployeeNumber'
+					
+ 2) Employees:    Contains all employee information; 'employeeNumber' is the 'primary key'; 'officeCode' is the 'foreign key';
+				  Relationship with 'offices' table on 'officeCode'; Relationship with 'customers' table on 'employeeNumber';
+				  Self-relationship between 'employeeNumber' and 'reportsTo'
+   
+ 3) Offices:      Contains sales office information; 'officeCode' is the 'primary key'; 
+				  Relationship with 'employees' table on 'officeCode'
+   
+ 4) Orders:       Contains customers' sales orders; 'orderNumber' is the 'primary key'; 'customerNumber' is the 'foreign key';
+				  Relationship with 'customers' table on 'customerNumber'; 
+				  Relationship with 'orderdetails' table on 'orderNumber'
+   
+ 5) OrderDetails: Contains sales order line for each sales order; 'orderNumber' and 'productCode' are 'primary key';
+                  'orderNumber' is also foreign key; Relationship with 'orders' table on 'orderNumber';
+				  Relationship with 'products' table on 'productCode'
+   
+ 6) Payments:     Contains customers' payment records; 'customerNumber' and 'checkNumber' are 'primary key';
+                  'customerNumber' is also foreign key; Relationship with 'customers' table on 'customerNumber'
+   
+ 7) Products:     Contains a list of scale model cars; 'productCode' is the 'primary key'; 'productLine' is the 'foreign key';
+  				  Relationship 'orderdetails' table on 'productCode'; Relationship with 'productlines' table on 'productLine'
+   
+ 8) ProductLines: Contains a list of product line categories; 'productLine' is the 'primary key';
+				  Relationship with 'products' table on 'productLine' 
+
+ */				 
+
+ -- SQL Queries to analyse the database as follows:
+ 
+ -- Screen 3: Write a query to display all tables, no. of attributes per table and no.rows per table, primary, foreign key and relationships
+
+SELECT '' AS Table_Names,'' AS Number_of_Attributes,'' AS Number_of_Rows
+UNION ALL
+SELECT 'Customer',13,(SELECT COUNT(*)
+                        FROM customers)
+UNION ALL
+SELECT 'Products',9,(SELECT COUNT(*)
+                        FROM products)
+UNION ALL
+SELECT 'ProductLines',4,(SELECT COUNT(*)
+                        FROM productlines)
+UNION ALL
+SELECT 'Orders',7,(SELECT COUNT(*)
+                        FROM orders)
+UNION ALL
+SELECT 'OrderDetails',5,(SELECT COUNT(*)
+                        FROM orderdetails)
+UNION ALL
+SELECT 'Payments',4,(SELECT COUNT(*)
+                        FROM payments)
+UNION ALL
+SELECT 'Employees',8,(SELECT COUNT(*)
+                        FROM employees)
+UNION ALL
+SELECT 'Offices',9,(SELECT COUNT(*)
+                        FROM offices)
+						
+-- Question 1: screen 4, Which Products Should We Order More of or Less of?
+-- Write a query to compute the low stock for each product using a correlated subquery.
+SELECT productCode,
+       SUM(quantityOrdered * priceEach) AS product_performance, -- product_performance là phụ
+	   ROUND(SUM(quantityOrdered) * 1.0 / (SELECT quantityInStock
+		                                      FROM products pr
+											 WHERE od.productCode = pr.productCode), 2) AS low_stock											 
+   FROM orderdetails od
+  GROUP BY productCode
+  ORDER BY low_stock
+  LIMIT 10;
+  
+-- Screen 4: Write a query to compute the product performance for each product.
+  SELECT productCode,
+         round(SUM(quantityOrdered * priceEach),1) AS prod_perf
+    FROM orderdetails AS O
+   GROUP BY productCode
+   ORDER BY prod_perf DESC
+   LIMIT 10;  
+-- add productName column:
+   SELECT  p.productCode,
+		   p.productName, 
+		   p.productLine,
+		   SUM(o.quantityOrdered * o.priceEach) AS prod_perf
+     FROM  products AS p
+	 JOIN  orderdetails as o
+	   ON  p.productCode = o.productCode
+    GROUP  BY p.productCode 	  
+	ORDER  BY prod_perf DESC
+    LIMIT  10;
+/*
+Now that we know the database a little better, we can answer the first question: which products should we order more of or less of? 
+This question refers to inventory reports, including low stock(i.e. product in demand) and product performance. 
+This will optimize the supply and the user experience by preventing the best-selling products from going out-of-stock.
+
+	- The low stock represents the quantity of the sum of each product ordered divided by the quantity of product in stock. 
+We can consider the ten highest rates. These will be the top ten products that are almost out-of-stock or completely out-of-stock.
+	- The product performance represents the sum of sales per product.
+	- Priority products for restocking are those with high product performance that are on the brink of being out of stock.	
+ --  Combine the previous queries using a Common Table Expression (CTE) to display priority products for restocking
+*/
+ WITH
+   perf AS (
+    SELECT  productCode, 
+	        SUM(quantityOrdered) * 1.0 AS qtyorder,
+	        SUM(quantityOrdered * priceEach) AS prod_perf
+     FROM   orderdetails
+	 GROUP  BY productCode 
+	),
+	lstock AS (
+    SELECT p.productCode,
+		   p.productName, 
+		   p.productLine,
+           ROUND(SUM(perf.qtyorder * 1.0) / p.quantityInstock, 2) AS low_stock
+     FROM  products  AS p
+	 JOIN  perf
+	   ON  p.productCode = perf.productCode
+    GROUP  BY p.productCode 	  
+    ORDER  BY low_stock 
+    LIMIT  10
+    )
+	  
+  SELECT lstock.productCode,
+		 lstock.productLine,
+		 lstock.productName,
+		 perf.prod_perf, 
+		 lstock.low_stock 
+    FROM lstock
+	JOIN perf
+	  ON lstock.productCode = perf.productCode
+   ORDER BY perf.prod_perf DESC;
+ 
+--Question 2: Screen 5/ How Should We Match Marketing and Communication Strategies to Customer Behavior?
+ -- Screen 5: Write a query to display customers and profit generated by them by joining products, orderdetails and orders tables
+  
+  SELECT os.customerNumber, SUM(quantityOrdered * (priceEach - buyPrice)) AS profit_gen  
+    FROM products pr
+	JOIN orderdetails od
+	  ON pr.productCode = od.productCode
+	JOIN orders os
+	  ON od.orderNumber = os.orderNumber
+   GROUP BY os.customerNumber
+   ORDER BY profit_gen DESC;
+ 
+ -- Write a query to find top 10 customers in terms of profit generation by using JOINS
+  SELECT c.contactLastName,c.contactFirstName, c.city,c.country,
+		o.customerNumber, SUM(quantityOrdered * (priceEach - buyPrice)) AS profit
+  FROM products p
+  JOIN orderdetails od
+    ON p.productCode = od.productCode
+  JOIN orders o
+    ON o.orderNumber = od.orderNumber
+  JOIN customers c
+    ON o.customerNumber = c.customerNumber
+ GROUP BY o.customerNumber
+ ORDER BY profit DESC
+ LIMIT 10;
+ -- Write a query to find top 10 customers in terms of profit generation by using CTE
+WITH
+  profit_gen_table AS (
+    SELECT os.customerNumber, SUM(quantityOrdered * (priceEach - buyPrice)) AS prof_gen  
+      FROM products pr
+	  JOIN orderdetails od
+	    ON pr.productCode = od.productCode
+	  JOIN orders os
+	    ON od.orderNumber = os.orderNumber
+     GROUP BY os.customerNumber
+  )
+	SELECT contactLastName, contactFirstName, city, country, pg.prof_gen
+	  FROM customers cust
+	  JOIN profit_gen_table pg
+	    ON pg.customerNumber = cust.customerNumber
+	 ORDER BY pg.prof_gen 
+	 LIMIT 10;
+
+ -- Least engaged : Write a query to find bottom 10 customers in terms of profit generation using JOINS
+
+  SELECT c.contactLastName,c.contactFirstName, c.city,c.country,
+		o.customerNumber, SUM(quantityOrdered * (priceEach - buyPrice)) AS profit
+  FROM products p
+  JOIN orderdetails od
+    ON p.productCode = od.productCode
+  JOIN orders o
+    ON o.orderNumber = od.orderNumber
+  JOIN customers c
+    ON o.customerNumber = c.customerNumber
+ GROUP BY o.customerNumber
+ ORDER BY profit
+ LIMIT 10;
+ 
+-- Screen 6: Write a query to find bottom 5 customers in terms of profit generation using CTE	  
+  WITH
+  profit_gen_table AS (
+	SELECT os.customerNumber, SUM(quantityOrdered * (priceEach - buyPrice)) AS prof_gen  
+      FROM products pr
+	  JOIN orderdetails od
+	    ON pr.productCode = od.productCode
+	  JOIN orders os
+	    ON od.orderNumber = os.orderNumber
+     GROUP BY os.customerNumber
+  )
+	SELECT contactLastName, contactFirstName, city, country, pg.prof_gen
+	  FROM customers cust
+	  JOIN profit_gen_table pg
+	    ON pg.customerNumber = cust.customerNumber
+	 ORDER BY pg.prof_gen
+	 LIMIT 5;
+ -- Question 3: How Much Can We Spend on Acquiring New Customers?
+-- Screen 7: Write a query to compute the average of customer lifetime value (LTV) using CTE
+-- Before answering this question, let's find the number of new customers arriving each month.
+WITH
+ pmt_yr_mo_table AS (
+ SELECT *, CAST(SUBSTR(paymentDate,1,4) AS INTEGER) *100 + CAST(SUBSTR(paymentDate,6,2) AS INTEGER) AS year_month
+   FROM payments AS p
+ ), 
+ cust_by_mo_table AS (
+ SELECT p1.year_month, COUNT(*) AS no_of_customers, SUM(p1.amount) AS total   
+   FROM pmt_yr_mo_table AS p1
+  GROUP BY p1.year_month 
+ ),
+new_cust_by_mo_table AS ( 
+ SELECT  p1.*, COUNT(*) AS no_of_new_customers, SUM(p1.amount) AS new_customer_total,
+        (SELECT no_of_customers
+		   FROM cust_by_mo_table AS c
+		  WHERE c.year_month = p1.year_month) AS no_of_customers,
+		 (SELECT total
+		   FROM cust_by_mo_table AS c
+		  WHERE c.year_month = p1.year_month) AS total
+		  
+   FROM pmt_yr_mo_table
+ AS p1
+  WHERE p1.customerNumber NOT IN (SELECT customerNumber
+									FROM pmt_yr_mo_table AS p2
+								   WHERE p2.year_month < p1.year_month)
+  GROUP BY p1.year_month 
+)
+ SELECT year_month,
+		ROUND(no_of_new_customers * 100 /no_of_customers,1) AS no_of_new_customers_percentage,
+        ROUND(new_customer_total * 100 / total, 1) AS new_customer_total_percenatge 
+   FROM new_cust_by_mo_table;
+
+  
+ -- compute the Customer Lifetime Value (LTV), which represents the average amount of money a customer generates
+  
+  WITH
+  profit_gen_table AS (
+	SELECT os.customerNumber, SUM(quantityOrdered * (priceEach - buyPrice)) AS prof_gen  
+      FROM products pr
+	  JOIN orderdetails od
+	    ON pr.productCode = od.productCode
+	  JOIN orders os
+	    ON od.orderNumber = os.orderNumber
+     GROUP BY os.customerNumber
+  )
+   SELECT ROUND(AVG(pg.prof_gen),2) AS Customer_Lifetime_Value
+     FROM profit_gen_table pg;
+	 
+/* 
+  
+  Conclusion:
+ 
+  Question 1: Which products should we order more of or less of?
+  
+    Answer 1: Analysing the query results of comparing low stock with product performance we can see that,
+              6 out 10 cars belong to 'Classic Cars' product line. They sell frequently with high product performance.
+		      As such we should be re-stocked these frequently
+ 
+  Question 2: How should we tailor marketing and communication strategies to customer behaviors?
+  
+    Answer 2: Analysing the query results of top and bottom customers in terms of profit generation,
+              we need to offer loyalty rewards and priority services for our top customers to retain them.
+			  Also for bottom customers we need to solicit feedback to better understand their preferences, 
+			  expected pricing, discount and offers to increase our sales
+ 
+  Question 3: How much can we spend on acquiring new customers?
+  
+    Answer 3: The average customer liftime value of our store is $ 39,040. This means for every new customer we make profit of 39,040 dollars. 
+	          We can use this to predict how much we can spend on new customer acquisition, 
+			  at the same time maintain or increase our profit levels.
+	          
+  PROJECT END */
+
+</sql><current_tab id="0"/></tab_sql></sqlb_project>
